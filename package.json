@@ -1,0 +1,41 @@
+{
+  "name": "planetrunners",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.7.3",
+    "@prisma/client": "^4.3.1",
+    "antd": "^4.22.3",
+    "axios": "^0.27.2",
+    "ethers": "^5.7.0",
+    "next": "12.1.6",
+    "next-themes": "^0.2.1",
+    "nft.storage": "^7.0.0",
+    "react": "18.1.0",
+    "react-dom": "18.1.0",
+    "react-jazzicon": "^1.0.4",
+    "swr": "^1.3.0",
+    "web3": "^1.7.5"
+  },
+  "devDependencies": {
+    "@types/node": "17.0.31",
+    "@types/react": "18.0.9",
+    "@types/react-dom": "18.0.3",
+    "autoprefixer": "^10.4.7",
+    "eslint": "8.15.0",
+    "eslint-config-next": "12.1.6",
+    "postcss": "^8.4.13",
+    "prettier": "^2.6.2",
+    "prisma": "^4.3.1",
+    "sass": "^1.51.0",
+    "tailwindcss": "^3.0.24",
+    "typescript": "4.6.4"
+  }
+}
