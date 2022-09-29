@@ -4,11 +4,9 @@ import {
   SearchOutlined,
   UserOutlined,
   WalletOutlined,
-  FileAddOutlined,
   CloseOutlined,
   EllipsisOutlined,
   EyeOutlined,
-  PlusCircleOutlined,
   SettingOutlined,
   LoginOutlined,
   LogoutOutlined
@@ -23,7 +21,6 @@ import { NextPage } from 'next';
 const Header: NextPage<HeaderPropsType> = ({
   title,
   setTitle,
-  network,
   isUserLoggedIn,
   currentAccount,
   balance,
@@ -31,8 +28,7 @@ const Header: NextPage<HeaderPropsType> = ({
   theme,
   setSidebar,
   setTheme,
-  disconnectWallet,
-  connectWallet
+  disconnectWallet
 }: HeaderPropsType) => {
   const router = useRouter();
   const [current, setCurrent] = useState('/');
@@ -123,7 +119,7 @@ const Header: NextPage<HeaderPropsType> = ({
   return !router.route.startsWith('/mint') ? (
     <div>
       <Head>
-        <title>{title} | PlanetRunner</title>
+        <title>{title} | Planet Runner</title>
       </Head>
       <div
         className={`${
@@ -254,7 +250,7 @@ const Header: NextPage<HeaderPropsType> = ({
             </Link>
             <Link href="/">
               <div className="flex items-center text-2xl font-extrabold whitespace-nowrap tracking-tight hover:cursor-pointer">
-                PlanetRunner
+                Planet Runner
               </div>
             </Link>
           </div>

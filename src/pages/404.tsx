@@ -12,9 +12,11 @@ const Custom404: NextPage = ({}) => {
   return (
     <div className="flex justify-center mt-32">
       <main className="flex flex-col items-center">
-        <div className="text-9xl text-grey1 font-black">404</div>
+        <div className="text-9xl text-grey1 dark:text-white font-black">
+          404
+        </div>
         <div className="text-3xl font-bold mt-10">This page is lost.</div>
-        <div className="flex flex-col items-center text-xl text-black opacity-60 font-medium mt-5">
+        <div className="flex flex-col items-center text-xl text-black dark:text-white opacity-60 font-medium mt-5">
           <p>We`ve explored deep and wide,</p>
           <p>but we can`t find the page you were looking for.</p>
         </div>

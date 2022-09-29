@@ -1,20 +1,11 @@
 import type { NextPage } from 'next';
 import { message, Tabs } from 'antd';
-import { useEffect, useReducer, useState } from 'react';
-import Axios from 'axios';
+import { useEffect, useState } from 'react';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import { PaperClipOutlined } from '@ant-design/icons';
 import Items from '@components/Items';
-import Collections from '@components/Collections';
 import axios from 'axios';
-import {
-  CollectionType,
-  ICollections,
-  INft,
-  ItemTokenDataType,
-  ItemType,
-  MyPagePropsType
-} from '@libs/client/client';
+import { INft, MyPagePropsType } from '@libs/client/client';
 import { useRouter } from 'next/router';
 import { extractMetadataUrl } from '@libs/client/utils';
 

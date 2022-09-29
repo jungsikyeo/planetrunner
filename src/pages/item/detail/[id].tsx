@@ -70,36 +70,45 @@ const NftDetail: NextPage<ItemDetailType> = ({
   const [sellPrice, setSellPrice] = useState(price);
   const [alertText, setAlertText] = useState(false);
   const [nftDetail, setNftDetail] = useState<INft>();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const getNFT = async () => {
-      if (planetRunnerContract && router.query.id) {
-        const tokenId: number = Number(router.query.id);
-        const tokenUri = await planetRunnerContract.methods
-          .tokenURI(tokenId)
-          .call();
-        await Axios.get(extractMetadataUrl(tokenUri)).then(async ({ data }) => {
-          setName(String(Number(data.name)));
-          setImageUrl(extractMetadataUrl(data.image));
-          setCollectionName('Planet Runner');
-          setDescription(data.description);
-          setAttributes(data.attributes);
-          setMetadataUrl(extractMetadataUrl(tokenUri));
-        });
-        const nft: INft = await marketPlaceContract.methods
-          .fetchSingleItem(tokenId)
-          .call();
-        setPrice(Number(Web3.utils.fromWei(String(nft.price), 'ether')));
-        setSellPrice(Number(Web3.utils.fromWei(String(nft.price), 'ether')));
-        setNftDetail(nft);
+      try {
+        if (planetRunnerContract && router.query.id) {
+          const tokenId: number = Number(router.query.id);
+          const nft: INft = await marketPlaceContract.methods
+            .fetchSingleItem(tokenId)
+            .call();
+          const tokenUri = await planetRunnerContract.methods
+            .tokenURI(tokenId)
+            .call();
+          await Axios.get(extractMetadataUrl(tokenUri)).then(
+            async ({ data }) => {
+              setName(String(Number(data.name)));
+              setImageUrl(extractMetadataUrl(data.image));
+              setCollectionName('Planet Runner');
+              setDescription(data.description);
+              setAttributes(data.attributes);
+              setMetadataUrl(extractMetadataUrl(tokenUri));
+            }
+          );
 
-        const isOwner =
-          nft.owner?.toUpperCase() === currentAccount?.toUpperCase() ||
-          (nft.seller?.toUpperCase() === currentAccount?.toUpperCase() &&
-            !nft.sold)
-            ? true
-            : false;
-        setIsOwner(isOwner);
+          setPrice(Number(Web3.utils.fromWei(String(nft.price), 'ether')));
+          setSellPrice(Number(Web3.utils.fromWei(String(nft.price), 'ether')));
+          setNftDetail(nft);
+
+          const isOwner =
+            nft.owner?.toUpperCase() === currentAccount?.toUpperCase() ||
+            (nft.seller?.toUpperCase() === currentAccount?.toUpperCase() &&
+              !nft.sold)
+              ? true
+              : false;
+          setIsOwner(isOwner);
+          setLoading(true);
+        }
+      } catch (e) {
+        router.push('/404');
       }
     };
     getNFT();
@@ -252,7 +261,7 @@ const NftDetail: NextPage<ItemDetailType> = ({
     return true;
   };
 
-  return (
+  return loading ? (
     <div className="w-full h-full">
       <div className="mx-5 my-10 sm:m-10">
         <div className="flex justify-center">
@@ -520,6 +529,8 @@ const NftDetail: NextPage<ItemDetailType> = ({
         </div>
       </div>
     </div>
+  ) : (
+    <>loading...</>
   );
 };
 
