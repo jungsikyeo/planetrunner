@@ -17,10 +17,6 @@ export type HomeType = {
   marketPlaceContract: any;
   planetRunnerContract: any;
   currentAccount: string;
-  network: {
-    networkId: string;
-    networkName: string;
-  };
 };
 
 export type ItemDetailType = {

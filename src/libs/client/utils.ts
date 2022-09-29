@@ -60,3 +60,12 @@ export const shortAddress = (address: string) => {
       )}`
     : '';
 };
+
+export const longAddress = (address: string) => {
+  return address?.length > 0
+    ? `${address.substring(0, 8)} . . . ${address.substring(
+        address.length - 8,
+        address.length
+      )}`
+    : '';
+};

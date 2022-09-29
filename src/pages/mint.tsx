@@ -1,19 +1,27 @@
 import { NextPage } from 'next';
-import { useState } from 'react';
-import { Button, message } from 'antd';
+import { useEffect, useState } from 'react';
+import { Button, message, Progress, Spin, Switch } from 'antd';
 import { IWindow, MintType } from '@libs/client/client';
-import Web3 from 'web3';
-import Web3Modal from 'web3modal';
-import Marketplace from '@abis/Market.json';
-import PlanetRunners from '@abis/NFT.json';
+import Image from 'next/image';
+import logo from '../../public/logo.png';
+import matamask from '/public/metamask-icon.png';
+import { longAddress } from '@libs/client/utils';
+import { useTheme } from 'next-themes';
 
-const Mint: NextPage<MintType> = ({ planetRunnerContract }: MintType) => {
+const Mint: NextPage<MintType> = ({
+  planetRunnerContract,
+  marketPlaceContract,
+  planetRunnerAddress
+}: MintType) => {
   const [isLogin, setIsLogin] = useState(false);
   const [account, setAccount] = useState('');
   const [supply, setSupply] = useState({
     mintCount: 0,
     totalCount: 100
   });
+  const [loading, setLoading] = useState(false);
+  const [switchOn, setSwitchOn] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   const getSupply = async () => {
     const mintCount = await planetRunnerContract.methods.currentSupply().call();
@@ -55,23 +63,6 @@ const Mint: NextPage<MintType> = ({ planetRunnerContract }: MintType) => {
   };
 
   const mintNFT = async () => {
-    const web3Modal = new Web3Modal();
-    const provider = await web3Modal.connect();
-    const web3 = new Web3(provider);
-    const networkId = await web3.eth.net.getId();
-
-    // Mint the NFT
-    const planetRunnerAddress = (PlanetRunners as any).networks[networkId]
-      .address;
-    const planetRunnerContract = new web3.eth.Contract(
-      (PlanetRunners as any).abi,
-      planetRunnerAddress
-    );
-    const marketPlaceContract = new web3.eth.Contract(
-      (Marketplace as any).abi,
-      (Marketplace as any).networks[networkId].address
-    );
-
     const mintCount = await planetRunnerContract.methods.currentSupply().call();
     const totalCount = await planetRunnerContract.methods.MAX_SUPPLY().call();
 
@@ -109,21 +100,117 @@ const Mint: NextPage<MintType> = ({ planetRunnerContract }: MintType) => {
       message.error('sold out');
     }
   };
+
+  useEffect(() => {
+    const theme = localStorage.getItem('themeMode');
+    if (theme === 'dark') {
+      setSwitchOn(true);
+    } else {
+      setSwitchOn(false);
+    }
+  }, []);
+
+  const handleNightMode = async () => {
+    const themeMode = theme === 'dark' ? 'light' : 'dark';
+    setTheme(themeMode);
+    localStorage.setItem('themeMode', themeMode);
+  };
+
   return (
-    <div className="w-full h-screen flex items-center justify-center">
+    <div className="w-full h-screen flex mt-32 justify-center">
       {isLogin ? (
-        <div className="flex flex-col items-center w-52">
-          <span>{`${account}`}</span>
-          <span>{`${supply.mintCount} / ${supply.totalCount}`}</span>
-          <Button type="primary" onClick={mintNFT} className="w-20 mt-5">
-            Mint
-          </Button>
+        <div>
+          <div className="flex justify-center">
+            <span className="text-6xl font-extrabold italic">
+              Planet Runner
+            </span>
+          </div>
+          <div className="w-[50rem] min-w-[50rem] h-[20rem] flex flex-col items-center justify-evenly mt-5 border rounded-3xl bg-dark bg-opacity-10 dark:bg-none">
+            <div className="flex">
+              <div className="w-1/3 flex justify-center">
+                <Image width="180" height="150" src={logo} alt="logo" />
+              </div>
+              <div className="w-2/3 flex flex-col mx-5">
+                <span>
+                  These mystery boxes each contain an NFT Sneaker of random
+                  quality and type. Used in the Planet Runner mobile app, these
+                  NFT Sneakers facilitate the player’s ability to move to earn
+                  through walking, jogging or running outdoors.
+                </span>
+
+                <span className="text-sm font-semibold self-end mt-5">{`${(
+                  (Number(supply.mintCount) / Number(supply.totalCount)) *
+                  100
+                ).toFixed()}% (${supply.mintCount} / ${
+                  supply.totalCount
+                })`}</span>
+                <Progress
+                  percent={(supply.mintCount / supply.totalCount) * 100}
+                  showInfo={false}
+                />
+                <div className="flex justify-between items-center mt-5">
+                  <Switch
+                    checkedChildren="Dark"
+                    unCheckedChildren="Light"
+                    onChange={handleNightMode}
+                    className="m-4"
+                    defaultChecked={switchOn}
+                  />
+                  <span className="">{longAddress(account)}</span>
+                  <Button
+                    type="primary"
+                    onClick={mintNFT}
+                    className="w-32 h-12"
+                  >
+                    Mint
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
-        <div>
-          <Button type="primary" onClick={connection} className="w-40 h-12">
-            connection
-          </Button>
+        <div className="w-full flex flex-col items-center">
+          <main className="m-10">
+            <div className="flex flex-col">
+              <span className="text-2xl font-semibold">
+                Connect your wallet.
+              </span>
+              <span className="text-base font-medium mt-2">
+                If you don`t have a wallet yet, you can select a provider and
+                create one now.
+              </span>
+            </div>
+            <ul className="w-full h-20 flex items-center mt-10 border border-grey3 rounded-lg">
+              <li
+                className={`w-full flex justify-between mx-5 my-2 hover:cursor-pointer ${
+                  loading ? `opacity-30` : ``
+                }`}
+                onClick={connection}
+              >
+                <div className="w-full flex ">
+                  <div className="flex items-center">
+                    <Image
+                      src={matamask}
+                      width="30"
+                      height="30"
+                      alt="metamask"
+                    />
+                  </div>
+                  <div className="flex items-center ml-5 text-base font-semibold ">
+                    Metamask
+                  </div>
+                </div>
+                <div className="bg-info rounded-xl flex justify-center items-center">
+                  <span className="text-white font-semibold p-2">Popular</span>
+                </div>
+                <Spin
+                  spinning={loading}
+                  className="flex justify-center items-center ml-5"
+                ></Spin>
+              </li>
+            </ul>
+          </main>
         </div>
       )}
     </div>

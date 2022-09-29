@@ -19,9 +19,6 @@ import { extractMetadataUrl, shortAddress } from '@libs/client/utils';
 import Web3 from 'web3';
 import CurrentPriceOwner from '@components/item/detail/CurrenPriceOwner';
 import CurrentPriceNotOwner from '@components/item/detail/CurrenPriceNotOwner';
-import Web3Modal from 'web3modal';
-import Marketplace from '@abis/Market.json';
-import PlanetRunners from '@abis/NFT.json';
 
 const { Panel } = Collapse;
 const { Title, Paragraph } = Typography;
@@ -180,23 +177,6 @@ const NftDetail: NextPage<ItemDetailType> = ({
       setIsOwner(isOwner);
 
       if (isOwner) {
-        const web3Modal = new Web3Modal();
-        const provider = await web3Modal.connect();
-        const web3 = new Web3(provider);
-        const networkId = await web3.eth.net.getId();
-
-        // Mint the NFT
-        const planetRunnerAddress = (PlanetRunners as any).networks[networkId]
-          .address;
-        const planetRunnerContract = new web3.eth.Contract(
-          (PlanetRunners as any).abi,
-          planetRunnerAddress
-        );
-        const marketPlaceContract = new web3.eth.Contract(
-          (Marketplace as any).abi,
-          (Marketplace as any).networks[networkId].address
-        );
-
         if (nft.seller == '0x0000000000000000000000000000000000000000') {
           marketPlaceContract.methods
             .createMarketItem(

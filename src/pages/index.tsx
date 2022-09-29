@@ -14,20 +14,18 @@ const { TabPane } = Tabs;
 const Home: NextPage<HomeType> = ({
   marketPlaceContract,
   planetRunnerContract,
-  currentAccount,
-  network
+  currentAccount
 }: HomeType) => {
   const [myItemList, setMyItemList] = useState<INft[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    if (planetRunnerContract && currentAccount && network) {
+    if (planetRunnerContract && currentAccount && marketPlaceContract) {
       loadMyItemList();
     }
   }, [
     planetRunnerContract,
     currentAccount,
-    network,
     router.query.id,
     marketPlaceContract
   ]);
@@ -46,6 +44,7 @@ const Home: NextPage<HomeType> = ({
           const meta = await axios.get(extractMetadataUrl(tokenURI));
           const nft: INft = {
             price: i.price,
+            itemId: i.itemId,
             tokenId: i.tokenId,
             creator: i.creator,
             seller: i.seller,
@@ -125,149 +124,3 @@ const Home: NextPage<HomeType> = ({
 };
 
 export default Home;
-
-// import Web3 from 'web3';
-// import Web3Modal from 'web3modal';
-// import { useEffect, useState } from 'react';
-// import axios from 'axios';
-
-// import Marketplace from '@abis/Marketplace.json';
-// import PlanetRunners from '@abis/PlanetRunners.json';
-// import { extractMetadataUrl } from '@libs/client/utils';
-// import { Button } from 'antd';
-
-// interface INft {
-//   price: String;
-//   tokenId: String;
-//   seller: String;
-//   owner?: String;
-//   buyer?: String;
-//   image: String;
-//   name: String;
-//   description: String;
-//   tokenURI?: String;
-// }
-
-// export default function Home() {
-//   const [nfts, setNfts] = useState<INft[]>([]);
-//   const [loadingState, setLoadingState] = useState('not-loaded');
-
-//   useEffect(() => {
-//     loadNFTs();
-//   }, []);
-
-//   async function loadNFTs() {
-//     const web3Modal = new Web3Modal();
-//     const provider = await web3Modal.connect();
-//     const web3 = new Web3(provider);
-//     const networkId = await web3.eth.net.getId();
-
-//     const marketPlaceAbi: any = Marketplace.abi;
-//     const marketPlaceAddress: any = (Marketplace as any).networks[networkId]
-//       .address;
-
-//     const planetRunnerAbi: any = PlanetRunners.abi;
-//     const planetRunnerAddress: any = (PlanetRunners as any).networks[networkId]
-//       .address;
-
-//     // Get all listed NFTs
-//     const marketPlaceContract = new web3.eth.Contract(
-//       marketPlaceAbi,
-//       marketPlaceAddress
-//     );
-//     const listings = await marketPlaceContract.methods.getListedNfts().call();
-//     // Iterate over the listed NFTs and retrieve their metadata
-//     const nfts: INft[] = await Promise.all(
-//       listings.map(async (i: INft) => {
-//         try {
-//           const planetRunnersContract = new web3.eth.Contract(
-//             planetRunnerAbi,
-//             planetRunnerAddress
-//           );
-//           const tokenURI = await planetRunnersContract.methods
-//             .tokenURI(i.tokenId)
-//             .call();
-//           const meta = await axios.get(extractMetadataUrl(tokenURI));
-//           const nft: INft = {
-//             price: i.price,
-//             tokenId: i.tokenId,
-//             seller: i.seller,
-//             owner: i.buyer,
-//             image: meta.data.image,
-//             name: meta.data.name,
-//             description: meta.data.description
-//           };
-//           return nft;
-//         } catch (err) {
-//           console.log(err);
-//           return null;
-//         }
-//       })
-//     );
-//     setNfts(nfts.filter((nft: INft) => nft !== null));
-//     setLoadingState('loaded');
-//   }
-
-//   async function buyNft(nft: INft) {
-//     console.log(nft.price);
-//     const web3Modal = new Web3Modal();
-//     const provider = await web3Modal.connect();
-//     const web3 = new Web3(provider);
-//     const networkId = await web3.eth.net.getId();
-//     const marketPlaceAbi: any = Marketplace.abi;
-//     const marketPlaceAddress: any = (Marketplace as any).networks[networkId]
-//       .address;
-//     const planetRunnerAddress: any = (PlanetRunners as any).networks[networkId]
-//       .address;
-//     const marketPlaceContract = new web3.eth.Contract(
-//       marketPlaceAbi,
-//       marketPlaceAddress
-//     );
-//     const accounts = await web3.eth.getAccounts();
-//     console.log(
-//       marketPlaceContract,
-//       planetRunnerAddress,
-//       nft.tokenId,
-//       accounts[0],
-//       nft.price
-//     );
-//     await marketPlaceContract.methods
-//       .buyNft(planetRunnerAddress, nft.tokenId)
-//       .send({ from: accounts[0], value: nft.price });
-//     loadNFTs();
-//   }
-
-//   if (loadingState === 'loaded' && !nfts.length) {
-//     return <h1 className="px-20 py-10 text-3xl">No items available!</h1>;
-//   } else {
-//     return (
-//       <div className="flex justify-center">
-//         <div className="px-4 max-w-full">
-//           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-4 pt-4">
-//             {nfts.map((nft, i) => (
-//               <div key={i} className="border shadow rounded-xl overflow-hidden">
-//                 <img src={extractMetadataUrl(nft.image)} />
-//                 <div className="p-4">
-//                   <p className="h-8 text-lg font-semibold flex justify-start items-center">
-//                     {`#${nft.tokenId}`}
-//                   </p>
-//                 </div>
-//                 <div className="p-4 bg-black">
-//                   <p className="text-2xl font-bold text-white flex justify-center items-center">
-//                     {Web3.utils.fromWei(String(nft.price), 'ether')} ETH
-//                   </p>
-//                   <Button
-//                     className="mt-4 w-full h-12 text-white font-bold bg-info"
-//                     onClick={() => buyNft(nft)}
-//                   >
-//                     Buy now
-//                   </Button>
-//                 </div>
-//               </div>
-//             ))}
-//           </div>
-//         </div>
-//       </div>
-//     );
-//   }
-// }

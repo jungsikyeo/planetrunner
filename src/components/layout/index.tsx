@@ -16,8 +16,6 @@ import { NextPage } from 'next';
 import { useTheme } from 'next-themes';
 
 const networkId = process.env.NEXT_PUBLIC_MARKET_NETWORK || '1663729648756';
-const mainetURL =
-  process.env.NEXT_PUBLIC_MAINNET_URL || 'https://ganache.yjsworld.tk';
 
 const BaseLayout: NextPage<AppLayoutPropsType> = ({
   children
@@ -39,60 +37,37 @@ const BaseLayout: NextPage<AppLayoutPropsType> = ({
   const router = useRouter();
 
   useEffect(() => {
-    // const web3Modal = new Web3Modal();
-    // const provider = await web3Modal.connect();
-    // const web3 = new Web3(provider);
-    // const networkId = await web3.eth.net.getId();
+    const loadPlanetRunnerContract = async () => {
+      const web3Modal = new Web3Modal();
+      const provider = await web3Modal.connect();
+      const web3 = new Web3(provider);
+      const networkId = await web3.eth.net.getId();
 
-    // // Mint the NFT
-    // const planetRunnerAddress = (PlanetRunners as any).networks[networkId]
-    //   .address;
-    // const planetRunnerContract = new web3.eth.Contract(
-    //   (PlanetRunners as any).abi,
-    //   planetRunnerAddress
-    // );
-    // const marketPlaceContract = new web3.eth.Contract(
-    //   (Marketplace as any).abi,
-    //   (Marketplace as any).networks[networkId].address
-    // );
-
-    const loadPlanetRunnerContract = async (networkId: any) => {
-      if (networkId) {
-        const web3 = new Web3();
-        web3.setProvider(mainetURL);
-        const planetRunnerAbi: any = PlanetRunners.abi;
-        const planetRunnerAddress: any = (PlanetRunners as any).networks[
-          networkId
-        ].address;
-        if (planetRunnerAddress) {
-          const Contract: any = new web3.eth.Contract(
-            planetRunnerAbi,
-            planetRunnerAddress
-          );
-          setPlanetRunnerContract(Contract);
-          setPlanetRunnerAddress(planetRunnerAddress);
-        }
-      }
+      const planetRunnerAddress = (PlanetRunners as any).networks[networkId]
+        .address;
+      const planetRunnerContract: any = new web3.eth.Contract(
+        (PlanetRunners as any).abi,
+        planetRunnerAddress
+      );
+      setPlanetRunnerContract(planetRunnerContract);
+      setPlanetRunnerAddress(planetRunnerAddress);
     };
-    loadPlanetRunnerContract(networkId);
+    loadPlanetRunnerContract();
 
-    const loadMarketPlaceContract = async (networkId: any) => {
-      if (networkId) {
-        const web3 = new Web3();
-        web3.setProvider(mainetURL);
-        const marketPlaceAbi: any = Marketplace.abi;
-        const marketPlaceAddress: any = (Marketplace as any).networks[networkId]
-          .address;
-        if (marketPlaceAddress) {
-          const Contract: any = new web3.eth.Contract(
-            marketPlaceAbi,
-            marketPlaceAddress
-          );
-          setMarketPlaceContract(Contract);
-        }
-      }
+    const loadMarketPlaceContract = async () => {
+      const web3Modal = new Web3Modal();
+      const provider = await web3Modal.connect();
+      const web3 = new Web3(provider);
+      const networkId = await web3.eth.net.getId();
+
+      const marketPlaceContract: any = new web3.eth.Contract(
+        (Marketplace as any).abi,
+        (Marketplace as any).networks[networkId].address
+      );
+
+      setMarketPlaceContract(marketPlaceContract);
     };
-    loadMarketPlaceContract(networkId);
+    loadMarketPlaceContract();
 
     if (!isUserLoggedIn) {
       connectWallet();
@@ -128,25 +103,6 @@ const BaseLayout: NextPage<AppLayoutPropsType> = ({
       });
 
       if (accounts.length > 0) {
-        // await fetch('/api/user/create', {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json'
-        //   },
-        //   body: JSON.stringify({
-        //     networkId: networkId,
-        //     account: accounts[0]
-        //   })
-        // })
-        //   .then(response => response.json().catch(() => {}))
-        //   .then(data => {
-        //     console.log(data);
-        //   })
-        //   .catch(error => {
-        //     message.error('create user error!');
-        //     console.log(error);
-        //     router.push('/login');
-        //   });
         setCurrentAccount(accounts[0]);
         setIsUserLoggedIn(true);
 
