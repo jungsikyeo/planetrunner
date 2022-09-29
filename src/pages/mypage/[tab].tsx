@@ -6,119 +6,118 @@ import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import { PaperClipOutlined } from '@ant-design/icons';
 import Items from '@components/Items';
 import Collections from '@components/Collections';
-
+import axios from 'axios';
 import {
   CollectionType,
   ICollections,
+  INft,
   ItemTokenDataType,
   ItemType,
   MyPagePropsType
 } from '@libs/client/client';
 import { useRouter } from 'next/router';
+import { extractMetadataUrl } from '@libs/client/utils';
 
 const { TabPane } = Tabs;
 
 const MyPage: NextPage<MyPagePropsType> = ({
-  openPlanetContract,
+  planetRunnerContract,
+  marketPlaceContract,
   currentAccount,
   network
 }: MyPagePropsType) => {
-  const [myItemList, setMyItemList] = useState<ItemType[]>([]);
-  const [myCollectionList, setMyCollectionList] = useState<CollectionType[]>();
+  const [myItemList, setMyItemList] = useState<INft[]>([]);
+  const [mySellItemList, setMySellItemList] = useState<INft[]>([]);
   const router = useRouter();
   const tab: string | undefined | any = router.query.tab || '1';
 
   useEffect(() => {
-    if (openPlanetContract && currentAccount && network) {
-      const loadMyItemList = async (openPlanetContract: any) => {
-        const NFTsTokenData: ItemTokenDataType[] =
-          await openPlanetContract.methods.getNftTokens(currentAccount).call();
+    if (
+      planetRunnerContract &&
+      marketPlaceContract &&
+      currentAccount &&
+      network
+    ) {
+      const loadMyItemList = async () => {
+        const data = await marketPlaceContract.methods
+          .fetchMyNFTs()
+          .call({ from: currentAccount });
 
-        const NFTsMetadata = await Promise.all(
-          NFTsTokenData.filter(res =>
-            res.nftTokenURI.startsWith('https://')
-          ).map(res =>
-            Axios.get(res.nftTokenURI).then(({ data }) =>
-              Object.assign(data, res)
-            )
-          )
-        );
-
-        const items: ItemType[] = NFTsMetadata.map(metadata => {
-          const item: ItemType = {
-            nftTokenId: metadata.nftTokenId,
-            nftTokenURI: metadata.nftTokenURI,
-            imageURL: `https://ipfs.io/ipfs/${metadata.image.split('//')[1]}`,
-            name: metadata.name,
-            description: metadata.description,
-            supply: metadata.supply,
-            collection: metadata.collection,
-            blockchain: metadata.blockchain
-          };
-          return item;
-        });
-        setMyItemList(items.sort().reverse());
-      };
-      loadMyItemList(openPlanetContract);
-
-      const loadMyCollectionList = async () => {
-        await fetch('/api/collection/list', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            networkId: network.networkId,
-            account: currentAccount
-          })
-        })
-          .then(response => response.json().catch(() => {}))
-          .then(async (data: { collections: CollectionType[] }) => {
-            if (data?.collections && data?.collections?.length > 0) {
-              await Promise.all(
-                data.collections
-                  .filter((res: CollectionType) =>
-                    res.logoImageMetadata?.startsWith('https://')
-                  )
-                  .map(
-                    (res: CollectionType) =>
-                      res.logoImageMetadata &&
-                      Axios.get(res.logoImageMetadata).then(({ data }) => {
-                        return Object.assign(res, { logoImageUrl: data.image });
-                      })
-                  )
-              );
-
-              await Promise.all(
-                data.collections
-                  .filter((res: CollectionType) =>
-                    res.featuredImageMetadata?.startsWith('https://')
-                  )
-                  .map(
-                    (res: CollectionType) =>
-                      res.featuredImageMetadata &&
-                      Axios.get(res.featuredImageMetadata).then(({ data }) => {
-                        return Object.assign(res, {
-                          featuredImageUrl: data.image
-                        });
-                      })
-                  )
-              );
-
-              console.log(data.collections);
-              setMyCollectionList(data.collections);
+        const nfts: INft[] = await Promise.all(
+          data.map(async (i: INft) => {
+            try {
+              const tokenURI = await planetRunnerContract.methods
+                .tokenURI(i.tokenId)
+                .call();
+              const meta = await axios.get(extractMetadataUrl(tokenURI));
+              const nft = {
+                price: i.price,
+                tokenId: i.tokenId,
+                creator: i.creator,
+                seller: i.seller,
+                owner: i.buyer,
+                image: meta.data.image,
+                description: meta.data.description,
+                tokenURI: tokenURI,
+                sold: i.sold
+              };
+              return nft;
+            } catch (err) {
+              console.log(err);
+              return null;
             }
           })
-          .catch(error => {
-            console.log(error);
-          });
+        );
+        setMyItemList(nfts.sort().reverse());
       };
-      loadMyCollectionList();
+      loadMyItemList();
+
+      const loadMySellItemList = async () => {
+        const data = await marketPlaceContract.methods
+          .fetchMarketItems()
+          .call();
+
+        console.log(data);
+        const nfts: INft[] = await Promise.all(
+          data
+            .filter(
+              (nft: INft) =>
+                nft.owner?.toUpperCase() == currentAccount.toUpperCase() ||
+                (nft.seller.toUpperCase() == currentAccount.toUpperCase() &&
+                  !nft.sold)
+            )
+            .map(async (i: INft) => {
+              try {
+                const tokenURI = await planetRunnerContract.methods
+                  .tokenURI(i.tokenId)
+                  .call();
+                const meta = await axios.get(extractMetadataUrl(tokenURI));
+                const nft = {
+                  price: i.price,
+                  tokenId: i.tokenId,
+                  creator: i.creator,
+                  seller: i.seller,
+                  owner: i.buyer,
+                  image: meta.data.image,
+                  description: meta.data.description,
+                  tokenURI: tokenURI,
+                  sold: i.sold
+                };
+                return nft;
+              } catch (err) {
+                console.log(err);
+                return null;
+              }
+            })
+        );
+        console.log(nfts);
+        setMySellItemList(nfts.sort().reverse());
+      };
+      loadMySellItemList();
     } else {
       setMyItemList([]);
-      setMyCollectionList([]);
     }
-  }, [openPlanetContract, currentAccount, network]);
+  }, [planetRunnerContract, marketPlaceContract, currentAccount, network]);
 
   const addressId =
     currentAccount?.length > 0
@@ -165,13 +164,11 @@ const MyPage: NextPage<MyPagePropsType> = ({
                 defaultActiveKey={tab}
                 className="w-full h-full text-base font-semibold dark:text-white"
               >
-                <TabPane tab="Items" key="1">
+                <TabPane tab="My NFTs" key="1">
                   <Items itemList={myItemList} />
                 </TabPane>
-                <TabPane tab="Collections" key="2">
-                  {myCollectionList && myCollectionList.length > 0 && (
-                    <Collections collectionList={myCollectionList} />
-                  )}
+                <TabPane tab="My Sell NFTs" key="2">
+                  <Items itemList={mySellItemList} />
                 </TabPane>
               </Tabs>
             </div>

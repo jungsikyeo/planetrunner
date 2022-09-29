@@ -39,8 +39,8 @@ const Header: NextPage<HeaderPropsType> = ({
   const [switchOn, setSwitchOn] = useState(false);
 
   useEffect(() => {
-    if (router.route.startsWith('/create')) {
-      setTitle('Create');
+    if (router.route.startsWith('/mint')) {
+      setTitle('Mint');
     } else if (router.route.startsWith('/mypage')) {
       setTitle('MyPage');
     } else if (router.route.startsWith('/explore')) {
@@ -86,7 +86,7 @@ const Header: NextPage<HeaderPropsType> = ({
       handleOpenSidebar();
       return;
     }
-    if (e.key === '/' || e.key === '/explore') {
+    if (e.key === '/') {
       router.push(e.key);
       return;
     }
@@ -102,24 +102,6 @@ const Header: NextPage<HeaderPropsType> = ({
     }
   };
   const CreateMenu: MenuProps['items'] = [
-    {
-      label: 'Explore',
-      key: '/explore'
-    },
-    {
-      label: 'Create',
-      key: 'Create',
-      children: [
-        {
-          label: 'New Collection',
-          key: '/collection/create'
-        },
-        {
-          label: 'New Item',
-          key: `/item/create/${network.networkId}/${currentAccount}`
-        }
-      ]
-    },
     {
       label: <UserOutlined className="text-2xl" />,
       key: isUserLoggedIn ? '/mypage/1' : '/user'
@@ -138,10 +120,10 @@ const Header: NextPage<HeaderPropsType> = ({
         )}`
       : '';
 
-  return (
+  return !router.route.startsWith('/mint') ? (
     <div>
       <Head>
-        <title>{title} | OpenPlanet</title>
+        <title>{title} | PlanetRunner</title>
       </Head>
       <div
         className={`${
@@ -188,43 +170,17 @@ const Header: NextPage<HeaderPropsType> = ({
             </div>
           </div>
           <div className="flex items-start justify-center w-full h-96">
-            <ul className="flex flex-col items-center justify-evenly w-80 h-80 mt-4 mb-8 border border-black dark:border-grey2 border-opacity-10 rounded-xl">
-              <Link href="/explore">
-                <li className="w-full h-1/4 border-b border-black dark:border-grey2 border-opacity-10 hover:shadow-md hover:cursor-pointer">
+            <ul className="flex flex-col items-center justify-evenly w-80 h-56 mt-4 mb-8 border border-black dark:border-grey2 border-opacity-10 rounded-xl">
+              <Link href="/">
+                <li className="w-full h-1/3 border-b border-black dark:border-grey2 border-opacity-10 hover:shadow-md hover:cursor-pointer">
                   <p className="h-full flex flex-row items-center">
                     <EyeOutlined className="m-4 text-xl" />
-                    <span className="text-md font-semibold">Explore</span>
-                  </p>
-                </li>
-              </Link>
-              <Link href={isUserLoggedIn ? `/collection/create` : `/login`}>
-                <li className="w-full h-1/4 border-b border-black dark:border-grey2 border-opacity-10 hover:shadow-md hover:cursor-pointer">
-                  <p className="h-full flex flex-row items-center">
-                    <FileAddOutlined className="m-4 text-xl" />
-                    <span className="text-md font-semibold">
-                      Create New Collection
-                    </span>
-                  </p>
-                </li>
-              </Link>
-              <Link
-                href={
-                  isUserLoggedIn
-                    ? `/item/create/${network.networkId}/${currentAccount}`
-                    : `/login`
-                }
-              >
-                <li className="w-full h-1/4 border-b border-black dark:border-grey2 border-opacity-10 hover:shadow-md hover:cursor-pointer">
-                  <p className="h-full flex flex-row items-center">
-                    <PlusCircleOutlined className="m-4 text-xl" />
-                    <span className="text-md font-semibold">
-                      Create New Item
-                    </span>
+                    <span className="text-md font-semibold">Home</span>
                   </p>
                 </li>
               </Link>
               <li
-                className="w-full h-1/4 border-b border-black dark:border-grey2 border-opacity-10 hover:shadow-md hover:cursor-pointer"
+                className="w-full h-1/3 border-b border-black dark:border-grey2 border-opacity-10 hover:shadow-md hover:cursor-pointer"
                 onClick={handleNightMode}
               >
                 <div className="h-full flex flex-row items-center justify-between">
@@ -236,7 +192,7 @@ const Header: NextPage<HeaderPropsType> = ({
                 </div>
               </li>
               <li
-                className="w-full h-1/4 hover:shadow-md hover:rounded-b-xl hover:cursor-pointer"
+                className="w-full h-1/3 hover:shadow-md hover:rounded-b-xl hover:cursor-pointer"
                 onClick={handleLogInOut}
               >
                 <p className="h-full flex flex-row items-center">
@@ -298,7 +254,7 @@ const Header: NextPage<HeaderPropsType> = ({
             </Link>
             <Link href="/">
               <div className="flex items-center text-2xl font-extrabold whitespace-nowrap tracking-tight hover:cursor-pointer">
-                OpenPlanet
+                PlanetRunner
               </div>
             </Link>
           </div>
@@ -320,7 +276,7 @@ const Header: NextPage<HeaderPropsType> = ({
               selectedKeys={[current]}
               mode="horizontal"
               items={CreateMenu}
-              className="bg-light dark:bg-deepdark dark:text-light border-none text-lg"
+              className="flex justify-end bg-light dark:bg-deepdark dark:text-light border-none text-lg"
             />
           </div>
           <div className="flex sm:hidden flex-row items-center text-2xl">
@@ -336,6 +292,8 @@ const Header: NextPage<HeaderPropsType> = ({
         </div>
       </nav>
     </div>
+  ) : (
+    <></>
   );
 };
 

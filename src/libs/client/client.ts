@@ -1,3 +1,46 @@
+/* new */
+export interface INft {
+  price: String;
+  itemId: String;
+  tokenId: String;
+  creator: String;
+  seller: String;
+  owner?: String;
+  buyer?: String;
+  image: String;
+  name: String;
+  description: String;
+  tokenURI?: String;
+  sold: boolean;
+}
+
+export type HomeType = {
+  marketPlaceContract: any;
+  planetRunnerContract: any;
+  currentAccount: string;
+  network: {
+    networkId: string;
+    networkName: string;
+  };
+};
+
+export type ItemDetailType = {
+  planetRunnerContract: any;
+  marketPlaceContract: any;
+  planetRunnerAddress: string;
+  currentAccount: string;
+  isUserLoggedIn: boolean;
+};
+
+export type MintType = {
+  planetRunnerContract: any;
+  marketPlaceContract: any;
+  planetRunnerAddress: string;
+  currentAccount: string;
+  isUserLoggedIn: boolean;
+};
+
+/* old */
 export type CollectionType = {
   name: string;
   logoImageUrl?: string;
@@ -55,15 +98,9 @@ export type ItemTokenDataType = {
   nftTokenCollection: string;
 };
 
-export type ItemDefailType = {
-  openPlanetContract: any;
-  userContract: any;
-  currentAccount: string;
-  isUserLoggedIn: boolean;
-};
-
 export type MyPagePropsType = {
-  openPlanetContract: any;
+  planetRunnerContract: any;
+  marketPlaceContract: any;
   currentAccount: string;
   network: {
     networkId: string;
@@ -72,7 +109,8 @@ export type MyPagePropsType = {
 };
 
 export type ExploreCollectionType = {
-  openPlanetContract: any;
+  marketPlaceContract: any;
+  planetRunnerContract: any;
   currentAccount: string;
   network: {
     networkId: string;
@@ -94,7 +132,7 @@ export type LoginPropsType = {
 
 export type HomePropsType = {
   web3: any;
-  openPlanetContract: any;
+  planetRunnerContract: any;
   isUserLoggedIn: boolean;
   currentAccount: string;
   network: {
@@ -150,6 +188,7 @@ export type CurrentPriceOwnerType = {
   name: string;
   imageUrl: string;
   alertText: boolean;
+  sold: boolean;
   handleSell: any;
   handleSendTransfer: any;
   handleSellPrice: any;

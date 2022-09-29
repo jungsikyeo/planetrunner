@@ -202,9 +202,9 @@ const ItemCreate: NextPage<CreateItemType> = ({
             <section className={sectionClass}>
               <div className={titleClass}>External link</div>
               <div className={messageClass}>
-                OpenPlanet will include a link to this URL on this item`s detail
-                page, so that users can click to learn more about it. You are
-                welcome to link to your own webpage with more details.
+                PlanetRunner will include a link to this URL on this item`s
+                detail page, so that users can click to learn more about it. You
+                are welcome to link to your own webpage with more details.
               </div>
               <div>
                 <Input

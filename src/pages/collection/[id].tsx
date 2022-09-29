@@ -16,7 +16,7 @@ import { GetServerSideProps, NextPage } from 'next';
 const { TabPane } = Tabs;
 
 const ExploreCollection: NextPage<ExploreCollectionType> = ({
-  openPlanetContract,
+  planetRunnerContract,
   currentAccount,
   network
 }: ExploreCollectionType) => {
@@ -27,10 +27,10 @@ const ExploreCollection: NextPage<ExploreCollectionType> = ({
   const router = useRouter();
 
   useEffect(() => {
-    if (openPlanetContract && currentAccount && network) {
-      const loadMyItemList = async (openPlanetContract: any) => {
+    if (planetRunnerContract && currentAccount && network) {
+      const loadMyItemList = async (planetRunnerContract: any) => {
         const NFTsTokenData: ItemTokenDataType[] =
-          await openPlanetContract.methods.getCollectionTokens().call();
+          await planetRunnerContract.methods.getCollectionTokens().call();
 
         const NFTsMetadata = await Promise.all(
           NFTsTokenData.filter(
@@ -59,7 +59,7 @@ const ExploreCollection: NextPage<ExploreCollectionType> = ({
         });
         setMyItemList(items.sort().reverse());
       };
-      loadMyItemList(openPlanetContract);
+      loadMyItemList(planetRunnerContract);
 
       const loadMyCollectionList = async () => {
         await fetch('/api/collection/detail', {
@@ -121,7 +121,7 @@ const ExploreCollection: NextPage<ExploreCollectionType> = ({
     } else {
       setMyItemList([]);
     }
-  }, [openPlanetContract, currentAccount, network, router.query.id]);
+  }, [planetRunnerContract, currentAccount, network, router.query.id]);
 
   return (
     <div>

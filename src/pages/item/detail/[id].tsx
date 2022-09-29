@@ -14,11 +14,14 @@ import Axios from 'axios';
 import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { ItemDefailType, ItemType } from '@libs/client/client';
-import { extractMetadataUrl } from '@libs/client/utils';
-import { ethers } from 'ethers';
+import { INft, ItemDetailType } from '@libs/client/client';
+import { extractMetadataUrl, shortAddress } from '@libs/client/utils';
+import Web3 from 'web3';
 import CurrentPriceOwner from '@components/item/detail/CurrenPriceOwner';
 import CurrentPriceNotOwner from '@components/item/detail/CurrenPriceNotOwner';
+import Web3Modal from 'web3modal';
+import Marketplace from '@abis/Market.json';
+import PlanetRunners from '@abis/NFT.json';
 
 const { Panel } = Collapse;
 const { Title, Paragraph } = Typography;
@@ -46,79 +49,77 @@ const columns = [
 
 const data: any[] = [];
 
-// for (let i = 0; i < 100; i++) {
-//   data.push({
-//     key: i,
-//     price: `100 ETH`,
-//     expiration: `${(1 + i).toFixed()} minutes ago`,
-//     from: `0x5A2609D698DE041B1Ba77139A4229c8a161dDd9e`
-//   });
-// }
-
-const NftDetail: NextPage<ItemDefailType> = ({
-  openPlanetContract,
-  userContract,
+const NftDetail: NextPage<ItemDetailType> = ({
+  planetRunnerContract,
+  marketPlaceContract,
+  planetRunnerAddress,
   currentAccount,
   isUserLoggedIn
-}: ItemDefailType) => {
+}: ItemDetailType) => {
   const router = useRouter();
   const [name, setName] = useState('');
   const [price, setPrice] = useState(0);
   const [imageUrl, setImageUrl] = useState('');
   const [description, setDescription] = useState('');
+  const [attributes, setAttributes] = useState([]);
   const [collectionName, setCollectionName] = useState('');
+  const [metadataUrl, setMetadataUrl] = useState('');
   const [address, setAddress] = useState('');
   const [isOwner, setIsOwner] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [sellPrice, setSellPrice] = useState(price);
   const [alertText, setAlertText] = useState(false);
+  const [nftDetail, setNftDetail] = useState<INft>();
 
   useEffect(() => {
-    const getNFTList = async () => {
-      if (openPlanetContract && router.query.id) {
+    const getNFT = async () => {
+      if (planetRunnerContract && router.query.id) {
         const tokenId: number = Number(router.query.id);
-        const tokenUri = await openPlanetContract.methods
+        const tokenUri = await planetRunnerContract.methods
           .tokenURI(tokenId)
           .call();
-        await Axios.get(tokenUri).then(async ({ data }) => {
-          setName(data.name);
+        await Axios.get(extractMetadataUrl(tokenUri)).then(async ({ data }) => {
+          setName(String(Number(data.name)));
           setImageUrl(extractMetadataUrl(data.image));
-          setCollectionName(data.collection);
+          setCollectionName('Planet Runner');
           setDescription(data.description);
+          setAttributes(data.attributes);
+          setMetadataUrl(extractMetadataUrl(tokenUri));
         });
-        const price: string = await openPlanetContract.methods
-          .getNftTokenPrice(tokenId)
+        const nft: INft = await marketPlaceContract.methods
+          .fetchSingleItem(tokenId)
           .call();
-        setPrice(Number(ethers.utils.formatEther(String(price))));
-        setSellPrice(Number(ethers.utils.formatEther(String(price))));
+        setPrice(Number(Web3.utils.fromWei(String(nft.price), 'ether')));
+        setSellPrice(Number(Web3.utils.fromWei(String(nft.price), 'ether')));
+        setNftDetail(nft);
 
-        if (currentAccount) {
-          const result = await openPlanetContract.methods
-            .getNftTokens(currentAccount)
-            .call({ from: currentAccount });
-
-          const isOwner =
-            result.filter((res: ItemType) => res.nftTokenId === router.query.id)
-              .length > 0
-              ? true
-              : false;
-          setIsOwner(isOwner);
-        }
+        const isOwner =
+          nft.owner?.toUpperCase() === currentAccount?.toUpperCase() ||
+          (nft.seller?.toUpperCase() === currentAccount?.toUpperCase() &&
+            !nft.sold)
+            ? true
+            : false;
+        setIsOwner(isOwner);
       }
     };
-    getNFTList();
-  }, [currentAccount, openPlanetContract, router.query.id]);
+    getNFT();
+  }, [
+    currentAccount,
+    marketPlaceContract,
+    planetRunnerContract,
+    router.query.id
+  ]);
 
   const handleBuyNow = async () => {
     if (!isUserLoggedIn) {
       router.push('/login');
     } else {
-      userContract.methods
-        .buyNft(router.query.id)
+      await marketPlaceContract.methods
+        .createMarketSale(planetRunnerAddress, router.query.id)
         .send({
           from: currentAccount,
-          value: ethers.utils.parseEther(String(price)),
-          gas: 250000
+          gas: 8000000,
+          value: Web3.utils.toWei(String(price), 'ether')
         })
         .once('receipt', (receipt: any) => router.push('/mypage/1'));
     }
@@ -129,12 +130,8 @@ const NftDetail: NextPage<ItemDefailType> = ({
     return;
   };
 
-  const openSell = async () => {
-    await setOpenModal(!openModal);
-  };
-
-  const handleSell = async () => {
-    await openSell();
+  const handleSell = () => {
+    setOpenModal(!openModal);
   };
 
   const handleSendTransfer = async () => {
@@ -142,43 +139,95 @@ const NftDetail: NextPage<ItemDefailType> = ({
       loginWarningNoti();
       return;
     }
-    openPlanetContract.methods
+    planetRunnerContract.methods
       .transferFrom(currentAccount, address, router.query.id)
       .send({
         from: currentAccount,
         gas: 210000
       })
-      .once('receipt', async (receipt: any) => {
-        await router.reload();
+      .once('receipt', (receipt: any) => {
+        router.reload();
       });
   };
 
   const handleListing = async () => {
     const isSell = await handleSellPrice(Number(sellPrice));
     if (isSell) {
-      const result = await openPlanetContract.methods
-        .getNftTokens(currentAccount)
-        .call({ from: currentAccount });
+      const tokenId: number = Number(router.query.id);
+      const nft: INft = await marketPlaceContract.methods
+        .fetchSingleItem(tokenId)
+        .call();
+
+      let listingFee = await marketPlaceContract.methods
+        .getListingPrice()
+        .call();
+      listingFee = listingFee.toString();
 
       const isOwner =
-        result.filter((res: ItemType) => res.nftTokenId === router.query.id)
-          .length > 0
+        nft.owner?.toUpperCase === currentAccount?.toUpperCase ||
+        (nft.seller?.toUpperCase === currentAccount?.toUpperCase && !nft.sold)
           ? true
           : false;
       setIsOwner(isOwner);
 
       if (isOwner) {
-        await openPlanetContract.methods
-          .addToMarket(
-            router.query.id,
-            ethers.utils.parseEther(String(sellPrice))
-          )
-          .send({
-            from: currentAccount,
-            gas: 210000
-          });
+        const web3Modal = new Web3Modal();
+        const provider = await web3Modal.connect();
+        const web3 = new Web3(provider);
+        const networkId = await web3.eth.net.getId();
 
-        await router.reload();
+        // Mint the NFT
+        const planetRunnerAddress = (PlanetRunners as any).networks[networkId]
+          .address;
+        const planetRunnerContract = new web3.eth.Contract(
+          (PlanetRunners as any).abi,
+          planetRunnerAddress
+        );
+        const marketPlaceContract = new web3.eth.Contract(
+          (Marketplace as any).abi,
+          (Marketplace as any).networks[networkId].address
+        );
+
+        if (nft.seller == '0x0000000000000000000000000000000000000000') {
+          marketPlaceContract.methods
+            .createMarketItem(
+              planetRunnerAddress,
+              nftDetail?.itemId,
+              Web3.utils.toWei(String(sellPrice), 'ether')
+            )
+            .send({
+              from: currentAccount,
+              value: listingFee,
+              gas: 8000000
+            })
+            .on('receipt', (receipt: any) => {
+              console.log(receipt);
+              router.reload();
+            });
+        } else {
+          if (nft.sold) {
+            marketPlaceContract.methods
+              .putItemToResell(
+                planetRunnerAddress,
+                tokenId,
+                Web3.utils.toWei(String(sellPrice), 'ether')
+              )
+              .send({ from: currentAccount, value: listingFee, gas: 8000000 })
+              .on('receipt', function () {
+                router.reload();
+              });
+          } else {
+            marketPlaceContract.methods
+              .updateMarketItemPrice(
+                tokenId,
+                Web3.utils.toWei(String(sellPrice), 'ether')
+              )
+              .send({ from: currentAccount, value: listingFee })
+              .on('receipt', function () {
+                router.reload();
+              });
+          }
+        }
       } else {
         message.error('You are not Item Owner.');
         setOpenModal(false);
@@ -187,16 +236,17 @@ const NftDetail: NextPage<ItemDefailType> = ({
   };
 
   const handleSellPrice = async (value: number) => {
-    if (Number(value) === 0) {
+    if (Number(value) <= 0) {
       await setAlertText(true);
       return false;
     }
 
-    if (Number(price) > 0 && Number(value) >= Number(price)) {
-      await setAlertText(true);
-      return false;
+    if (!nftDetail?.sold) {
+      if (Number(price) > 0 && Number(value) >= Number(price)) {
+        await setAlertText(true);
+        return false;
+      }
     }
-
     await setSellPrice(value);
     await setAlertText(false);
     return true;
@@ -210,12 +260,10 @@ const NftDetail: NextPage<ItemDefailType> = ({
             {/* Header */}
             <div className="h-20 flex flex-col">
               <Title level={5} className="text-info">
-                <Link href={`/collection/${collectionName}`}>
-                  {collectionName}
-                </Link>
+                <Link href="/">{collectionName}</Link>
               </Title>
               <Title level={2} className="mt-0 dark:text-white">
-                {name}
+                {`Runner #${nftDetail?.tokenId}`}
               </Title>
             </div>
 
@@ -244,6 +292,7 @@ const NftDetail: NextPage<ItemDefailType> = ({
                     name={name}
                     imageUrl={imageUrl}
                     alertText={alertText}
+                    sold={nftDetail?.sold}
                     handleSell={handleSell}
                     handleMakeOffer={handleMakeOffer}
                     handleSendTransfer={handleSendTransfer}
@@ -273,7 +322,7 @@ const NftDetail: NextPage<ItemDefailType> = ({
                 {/* Description */}
                 <div>
                   <Collapse
-                    defaultActiveKey={['1', '2']}
+                    defaultActiveKey={['1', '2', '3', '4']}
                     expandIconPosition={'end'}
                     className="rounded-lg mb-5 dark:bg-dark dark:border-grey3 dark:border-opacity-10"
                   >
@@ -287,7 +336,19 @@ const NftDetail: NextPage<ItemDefailType> = ({
                       key="1"
                       className="rounded-t-lg"
                     >
-                      {description}
+                      {description || (
+                        <div className="flex flex-col">
+                          <span className="font-semibold">
+                            By Planet Runner
+                          </span>
+                          <span className="mt-2">
+                            This mystery box contains an NFT Sneaker of random
+                            quality and type. Used in the Planet Runner mobile
+                            app, it facilitates the player’s ability to move to
+                            earn through walking, jogging or running outdoors.
+                          </span>
+                        </div>
+                      )}
                     </Panel>
                     <Panel
                       header={
@@ -298,7 +359,25 @@ const NftDetail: NextPage<ItemDefailType> = ({
                       }
                       key="2"
                     >
-                      <Empty />
+                      {attributes ? (
+                        <div className="w-full h-20 grid grid-cols-3 gap-3">
+                          {attributes.map((prop: any, i: number) => (
+                            <div
+                              key={i}
+                              className="border border-info rounded-md flex flex-col items-center justify-evenly bg-info bg-opacity-10"
+                            >
+                              <span className="flex justify-center text-info text-xs font-medium">
+                                {prop.trait_type}
+                              </span>
+                              <span className="flex justify-center text-black text-md font-semibold dark:text-white">
+                                {prop.value}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <Empty />
+                      )}
                     </Panel>
                     <Panel
                       header={
@@ -309,7 +388,13 @@ const NftDetail: NextPage<ItemDefailType> = ({
                       }
                       key="3"
                     >
-                      <Empty />
+                      <span>
+                        These mystery boxes each contain an NFT Sneaker of
+                        random quality and type. Used in the Planet Runner
+                        mobile app, these NFT Sneakers facilitate the player’s
+                        ability to move to earn through walking, jogging or
+                        running outdoors.
+                      </span>
                     </Panel>
                     <Panel
                       header={
@@ -321,7 +406,45 @@ const NftDetail: NextPage<ItemDefailType> = ({
                       key="4"
                       className="rounded-lg"
                     >
-                      <Empty />
+                      {nftDetail ? (
+                        <ul className="w-full">
+                          <Link href={metadataUrl}>
+                            <a target="_black">
+                              <li className="flex justify-around">
+                                <span className="w-1/2 font-semibold">
+                                  TokenId
+                                </span>
+                                <span className="w-1/2 flex justify-end">
+                                  {nftDetail.tokenId}
+                                </span>
+                              </li>
+                            </a>
+                          </Link>
+                          <li className="flex justify-around">
+                            <span className="w-1/2 font-semibold">Creator</span>
+                            <span className="w-1/2 flex justify-end">
+                              {shortAddress(nftDetail.creator as string) || '-'}
+                            </span>
+                          </li>
+                          <li className="flex justify-around">
+                            <span className="w-1/2 font-semibold">Seller</span>
+                            <span className="w-1/2 flex justify-end">
+                              {shortAddress(nftDetail.seller as string) || '-'}
+                            </span>
+                          </li>
+                          <li className="flex justify-around">
+                            <span className="w-1/2 font-semibold">Owner</span>
+                            <span className="w-1/2 flex justify-end">
+                              {isOwner
+                                ? `you`
+                                : shortAddress(nftDetail.owner as string) ||
+                                  '-'}
+                            </span>
+                          </li>
+                        </ul>
+                      ) : (
+                        <Empty />
+                      )}
                     </Panel>
                   </Collapse>
                 </div>
@@ -364,7 +487,6 @@ const NftDetail: NextPage<ItemDefailType> = ({
                   </Collapse>
                   {/* Offers Box */}
                   <Collapse
-                    defaultActiveKey={['1']}
                     expandIconPosition={'end'}
                     className="rounded-lg dark:bg-dark dark:border-grey3 dark:border-opacity-10"
                   >

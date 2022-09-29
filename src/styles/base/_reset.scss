@@ -2,6 +2,10 @@ html,
 body {
   padding: 0;
   margin: 0;
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  user-select:none;
 }
 
 a {
@@ -13,3 +17,4 @@ a {
   box-sizing: border-box;
   @apply font-montserrat;
 }
+

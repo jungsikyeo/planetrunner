@@ -23,6 +23,7 @@ const CurrentPriceOwner: CurrentPriceOwnerType | any = ({
   name,
   imageUrl,
   alertText,
+  sold,
   handleSell,
   handleSendTransfer,
   handleSellPrice,
@@ -107,7 +108,7 @@ const CurrentPriceOwner: CurrentPriceOwnerType | any = ({
           <SendOutlined />
           <span>Transfer</span>
         </Button>
-        {Number(price) === 0 ? (
+        {sold ? (
           <Button
             size="large"
             style={{ width: '100%' }}
@@ -154,7 +155,7 @@ const CurrentPriceOwner: CurrentPriceOwnerType | any = ({
             <Form.Item label={<span className="dark:text-white">Price</span>}>
               <InputNumber
                 placeholder="Amount"
-                max={Number(price) === 0 ? undefined : Number(price)}
+                max={sold ? undefined : Number(price)}
                 defaultValue={Number(price) === 0 ? 0.001 : Number(price)}
                 step="0.001"
                 addonAfter="ETH"
@@ -176,8 +177,8 @@ const CurrentPriceOwner: CurrentPriceOwnerType | any = ({
                 htmlType="submit"
                 onClick={handleListing}
                 disabled={alertText}
-                className={`mt-5 ${
-                  !alertText ? `bg-info text-white border-info` : ``
+                className={`mt-5 bg-info text-white border-info ${
+                  alertText ? `bg-opacity-30` : ``
                 }`}
               >
                 Complete listing

@@ -51,3 +51,12 @@ export const uploadStore = async (storeData: any) => {
 export const extractMetadataUrl = (url: string) => {
   return url ? `https://ipfs.io/ipfs/${url.split('//')[1]}` : '';
 };
+
+export const shortAddress = (address: string) => {
+  return address?.length > 0
+    ? `${address.substring(0, 6)} . . . ${address.substring(
+        address.length - 4,
+        address.length
+      )}`
+    : '';
+};
