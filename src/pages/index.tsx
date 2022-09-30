@@ -1,4 +1,4 @@
-import { Tabs } from 'antd';
+import { Spin, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import Items from '@components/Items';
@@ -17,6 +17,7 @@ const Home: NextPage<HomeType> = ({
   currentAccount
 }: HomeType) => {
   const [myItemList, setMyItemList] = useState<INft[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -62,9 +63,10 @@ const Home: NextPage<HomeType> = ({
       })
     );
     setMyItemList(nfts.filter((nft: INft) => nft !== null));
+    setLoading(false);
   };
 
-  return (
+  return !loading ? (
     <div>
       <div className="w-full h-[20rem] relative">
         <div
@@ -119,6 +121,10 @@ const Home: NextPage<HomeType> = ({
           </div>
         </main>
       </div>
+    </div>
+  ) : (
+    <div className="w-full h-screen flex items-center justify-center">
+      <Spin spinning={loading} size="large"></Spin>
     </div>
   );
 };

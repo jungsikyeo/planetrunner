@@ -1,5 +1,5 @@
 import type { NextPage } from 'next';
-import { message, Tabs } from 'antd';
+import { message, Spin, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
 import Jazzicon, { jsNumberForAddress } from 'react-jazzicon';
 import { PaperClipOutlined } from '@ant-design/icons';
@@ -19,6 +19,7 @@ const MyPage: NextPage<MyPagePropsType> = ({
 }: MyPagePropsType) => {
   const [myItemList, setMyItemList] = useState<INft[]>([]);
   const [mySellItemList, setMySellItemList] = useState<INft[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const tab: string | undefined | any = router.query.tab || '1';
 
@@ -108,6 +109,7 @@ const MyPage: NextPage<MyPagePropsType> = ({
     } else {
       setMyItemList([]);
     }
+    setLoading(false);
   }, [planetRunnerContract, marketPlaceContract, currentAccount, network]);
 
   const addressId =
@@ -123,7 +125,7 @@ const MyPage: NextPage<MyPagePropsType> = ({
     message.success('Copied!');
   };
 
-  return (
+  return !loading ? (
     <div>
       <div className="w-full h-screen flex justify-start">
         <main className="w-full h-full flex flex-col p-14">
@@ -166,6 +168,10 @@ const MyPage: NextPage<MyPagePropsType> = ({
           </div>
         </main>
       </div>
+    </div>
+  ) : (
+    <div className="w-full h-screen flex items-center justify-center">
+      <Spin spinning={loading} size="large"></Spin>
     </div>
   );
 };

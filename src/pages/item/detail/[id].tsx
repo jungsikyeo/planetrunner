@@ -1,4 +1,13 @@
-import { Card, Collapse, Empty, Image, Table, Typography, message } from 'antd';
+import {
+  Card,
+  Collapse,
+  Empty,
+  Image,
+  Table,
+  Typography,
+  message,
+  Spin
+} from 'antd';
 import React, { useEffect, useState } from 'react';
 import {
   AlignLeftOutlined,
@@ -67,7 +76,7 @@ const NftDetail: NextPage<ItemDetailType> = ({
   const [sellPrice, setSellPrice] = useState(price);
   const [alertText, setAlertText] = useState(false);
   const [nftDetail, setNftDetail] = useState<INft>();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getNFT = async () => {
@@ -102,7 +111,7 @@ const NftDetail: NextPage<ItemDetailType> = ({
               ? true
               : false;
           setIsOwner(isOwner);
-          setLoading(true);
+          setLoading(false);
         }
       } catch (e) {
         router.push('/404');
@@ -241,7 +250,7 @@ const NftDetail: NextPage<ItemDetailType> = ({
     return true;
   };
 
-  return loading ? (
+  return !loading ? (
     <div className="w-full h-full">
       <div className="mx-5 my-10 sm:m-10">
         <div className="flex justify-center">
@@ -510,7 +519,9 @@ const NftDetail: NextPage<ItemDetailType> = ({
       </div>
     </div>
   ) : (
-    <>loading...</>
+    <div className="w-full h-screen flex items-center justify-center">
+      <Spin spinning={loading} size="large"></Spin>
+    </div>
   );
 };
 
