@@ -77,7 +77,7 @@ const Mint: NextPage<MintType> = ({
         .createToken()
         .send({
           from: account,
-          gas: 8000000
+          gas: 300000
         })
         .on('receipt', async (receipt: any) => {
           console.log('minted');
@@ -90,7 +90,7 @@ const Mint: NextPage<MintType> = ({
             .send({
               value: listingFee,
               from: account,
-              gas: 8000000
+              gas: 300000
             })
             .on('receipt', function () {
               getSupply();

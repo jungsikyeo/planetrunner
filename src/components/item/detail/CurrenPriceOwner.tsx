@@ -17,6 +17,7 @@ const { Title, Text } = Typography;
 
 const CurrentPriceOwner: CurrentPriceOwnerType | any = ({
   price,
+  address,
   setAddress,
   openModal,
   setOpenModal,
@@ -103,6 +104,7 @@ const CurrentPriceOwner: CurrentPriceOwnerType | any = ({
           size="large"
           style={{ width: '100%' }}
           onClick={handleSendTransfer}
+          disabled={address ? false : true}
           className="flex items-center justify-center"
         >
           <SendOutlined />

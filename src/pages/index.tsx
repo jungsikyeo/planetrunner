@@ -16,7 +16,7 @@ const Home: NextPage<HomeType> = ({
   planetRunnerContract,
   currentAccount
 }: HomeType) => {
-  const [myItemList, setMyItemList] = useState<INft[]>([]);
+  const [sellItemList, setSellItemList] = useState<INft[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -39,32 +39,39 @@ const Home: NextPage<HomeType> = ({
     const nfts: INft[] = await Promise.all(
       listings.map(async (i: INft) => {
         try {
-          const tokenURI = await planetRunnerContract.methods
-            .tokenURI(i.tokenId)
-            .call();
-          const meta = await axios.get(extractMetadataUrl(tokenURI));
-          const nft: INft = {
-            price: i.price,
-            itemId: i.itemId,
-            tokenId: i.tokenId,
-            creator: i.creator,
-            seller: i.seller,
-            owner: i.buyer,
-            sold: i.sold,
-            image: meta.data.image,
-            name: meta.data.name,
-            description: meta.data.description
-          };
-          return nft;
+          if (Number(i.tokenId) > 0) {
+            const tokenURI = await planetRunnerContract.methods
+              .tokenURI(i.tokenId)
+              .call();
+            const meta = await axios.get(extractMetadataUrl(tokenURI));
+            const nft: INft = {
+              price: i.price,
+              itemId: i.itemId,
+              tokenId: i.tokenId,
+              creator: i.creator,
+              seller: i.seller,
+              owner: i.buyer,
+              sold: i.sold,
+              image: meta.data.image,
+              name: meta.data.name,
+              description: meta.data.description
+            };
+            return nft;
+          }
         } catch (err) {
           console.log(err);
           return null;
         }
       })
     );
-    setMyItemList(nfts.filter((nft: INft) => nft !== null));
+    setSellItemList(
+      nfts.filter((nft: INft) => nft?.tokenId !== undefined).sort(priceSort)
+    );
     setLoading(false);
   };
+
+  const priceSort = (nftA: INft, nftB: INft) =>
+    Number(nftA.price) - Number(nftB.price);
 
   return !loading ? (
     <div>
@@ -114,7 +121,7 @@ const Home: NextPage<HomeType> = ({
                 className="w-full h-full text-base font-semibold"
               >
                 <TabPane tab="Items" key="1">
-                  <Items itemList={myItemList} sellMode={true} />
+                  <Items itemList={sellItemList} sellMode={true} />
                 </TabPane>
               </Tabs>
             </div>

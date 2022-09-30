@@ -24,7 +24,11 @@ import { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { INft, ItemDetailType } from '@libs/client/client';
-import { extractMetadataUrl, shortAddress } from '@libs/client/utils';
+import {
+  EMPTY_ADDRESS,
+  extractMetadataUrl,
+  shortAddress
+} from '@libs/client/utils';
 import Web3 from 'web3';
 import CurrentPriceOwner from '@components/item/detail/CurrenPriceOwner';
 import CurrentPriceNotOwner from '@components/item/detail/CurrenPriceNotOwner';
@@ -114,10 +118,13 @@ const NftDetail: NextPage<ItemDetailType> = ({
           setLoading(false);
         }
       } catch (e) {
+        console.log(e);
         router.push('/404');
       }
     };
-    getNFT();
+    setTimeout(() => {
+      getNFT();
+    }, 1500);
   }, [
     currentAccount,
     marketPlaceContract,
@@ -133,7 +140,7 @@ const NftDetail: NextPage<ItemDetailType> = ({
         .createMarketSale(planetRunnerAddress, router.query.id)
         .send({
           from: currentAccount,
-          gas: 8000000,
+          gas: 210000,
           value: Web3.utils.toWei(String(price), 'ether')
         })
         .once('receipt', (receipt: any) => router.push('/mypage/1'));
@@ -154,8 +161,14 @@ const NftDetail: NextPage<ItemDetailType> = ({
       loginWarningNoti();
       return;
     }
-    planetRunnerContract.methods
-      .transferFrom(currentAccount, address, router.query.id)
+
+    if (!nftDetail?.sold) {
+      message.error('NFT is on sale. Cannot be transferred.');
+      return;
+    }
+
+    marketPlaceContract.methods
+      .updateMarketItemOwner(planetRunnerAddress, nftDetail.tokenId, address)
       .send({
         from: currentAccount,
         gas: 210000
@@ -186,7 +199,7 @@ const NftDetail: NextPage<ItemDetailType> = ({
       setIsOwner(isOwner);
 
       if (isOwner) {
-        if (nft.seller == '0x0000000000000000000000000000000000000000') {
+        if (nft.seller == EMPTY_ADDRESS) {
           marketPlaceContract.methods
             .createMarketItem(
               planetRunnerAddress,
@@ -196,7 +209,7 @@ const NftDetail: NextPage<ItemDetailType> = ({
             .send({
               from: currentAccount,
               value: listingFee,
-              gas: 8000000
+              gas: 210000
             })
             .on('receipt', (receipt: any) => {
               console.log(receipt);
@@ -210,7 +223,7 @@ const NftDetail: NextPage<ItemDetailType> = ({
                 tokenId,
                 Web3.utils.toWei(String(sellPrice), 'ether')
               )
-              .send({ from: currentAccount, value: listingFee, gas: 8000000 })
+              .send({ from: currentAccount, value: listingFee, gas: 210000 })
               .on('receipt', function () {
                 router.reload();
               });
@@ -284,6 +297,7 @@ const NftDetail: NextPage<ItemDetailType> = ({
                 {isOwner ? (
                   <CurrentPriceOwner
                     price={price}
+                    address={address}
                     setAddress={setAddress}
                     openModal={openModal}
                     setOpenModal={setOpenModal}

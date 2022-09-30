@@ -17,7 +17,7 @@ contract NFT is ERC721URIStorage {
   string public baseURI =
     'ipfs://bafybeigtohdkrndj7jghq3yligoiqnvsz4vsmwfpga7ri7hgp6e2klzs7m/';
 
-  constructor(address marketplaceAddress) ERC721('Metaverse Tokens', 'METT') {
+  constructor(address marketplaceAddress) ERC721('Planet Runner', 'PR') {
     contractAddress = marketplaceAddress;
   }
 

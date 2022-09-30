@@ -78,6 +78,7 @@ export interface IWindow {
 
 export type CurrentPriceOwnerType = {
   price: string;
+  address: string;
   setAddress: any;
   openModal: any;
   setOpenModal: any;

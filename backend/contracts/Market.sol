@@ -54,10 +54,16 @@ contract Market is ReentrancyGuard {
 
   //mateus
 
-  event ProductUpdated(
+  event ProductPriceUpdated(
     uint256 indexed itemId,
     uint256 indexed oldPrice,
     uint256 indexed newPrice
+  );
+
+  event ProductOwnerUpdated(
+    uint256 indexed itemId,
+    address oldOwner,
+    address newOwner
   );
 
   event MarketItemDeleted(uint256 itemId);
@@ -112,9 +118,6 @@ contract Market is ReentrancyGuard {
     uint256 price
   ) public payable nonReentrant {
     require(price > 0, 'Price must be at least 1 wei');
-    // obligates the seller to pay the listing price
-    //require(msg.value == listingPrice, 'Listing fee required');
-
     _itemsIds.increment();
     uint256 itemId = _itemsIds.current();
 
@@ -170,7 +173,21 @@ contract Market is ReentrancyGuard {
     uint256 oldPrice = item.price;
     item.price = newPrice;
 
-    emit ProductUpdated(id, oldPrice, newPrice);
+    emit ProductPriceUpdated(id, oldPrice, newPrice);
+  }
+
+  function updateMarketItemOwner(
+    address nftContract,
+    uint256 id,
+    address newOwner
+  ) public payable onlyItemOwner(id) {
+    MarketItem storage item = idToMarketItem[id];
+    address oldOwner = payable(msg.sender);
+    item.owner = payable(newOwner);
+
+    IERC721(nftContract).transferFrom(msg.sender, newOwner, id);
+
+    emit ProductOwnerUpdated(id, oldOwner, newOwner);
   }
 
   // mateus
