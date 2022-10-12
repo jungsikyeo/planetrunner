@@ -15,6 +15,11 @@ import { AppLayoutPropsType, IWindow } from '@libs/client/client';
 import { NextPage } from 'next';
 import { useTheme } from 'next-themes';
 
+interface RequestArguments {
+  method: string;
+  params?: unknown[] | object;
+}
+
 const networkId = process.env.NEXT_PUBLIC_MARKET_NETWORK || '1663729648756';
 
 const BaseLayout: NextPage<AppLayoutPropsType> = ({
@@ -88,9 +93,9 @@ const BaseLayout: NextPage<AppLayoutPropsType> = ({
         return false;
       }
 
-      const metamaskNetworkId: string | any = ethereum.networkVersion;
-      const metamaskNetworkName: string | any =
-        getNetworkName(metamaskNetworkId);
+      const metamaskNetworkId: string | any = await ethereum.request({
+        method: 'net_version'
+      });
 
       if (metamaskNetworkId !== networkId) {
         console.log(metamaskNetworkId, networkId);
