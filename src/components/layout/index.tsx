@@ -93,6 +93,7 @@ const BaseLayout: NextPage<AppLayoutPropsType> = ({
         getNetworkName(metamaskNetworkId);
 
       if (metamaskNetworkId !== networkId) {
+        console.log(metamaskNetworkId, networkId);
         message.warning('you are not connected to the ethereum testnet!');
         router.push('/login');
         return false;
