@@ -93,6 +93,7 @@ const Mint: NextPage<MintType> = ({
               gas: 300000
             })
             .on('receipt', function () {
+              message.info(`You successfully minted PlanetRunner #${tokenId}`);
               getSupply();
             });
         });
